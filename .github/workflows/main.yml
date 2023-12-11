@@ -1,0 +1,49 @@
+name: CICD GO
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  id-token: write #for OIDC
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Go
+        uses: actions/checkout@v2
+        with:
+          go-version: '1.21.3'
+
+      - name: Run vet
+        run: go vet .
+
+      - name: Install Deps   #If requires any (eg. linter)
+        run: |
+          go version
+
+      - name: Build Project
+        run: go build main.go
+
+  deploy:
+
+    runs-on: ubuntu-latest
+    needs: [build]           #Runs on if build phase was succeeded
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Initializing AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ secrets.IDENTITY_PROVIDER_ARN }}
+        aws-region: us-east-1
+
+    - name: Deploy to Lambda
+      run: |
+        zip -j main.zip ./main
+        aws lambda update-function-code --function-name=${{ vars.LAMBDA_FUNCTION_NAME }}
