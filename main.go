@@ -1,6 +1,5 @@
 /**
  * @author Rifat I.
- * @email rifat.islam(at)springrain.io
  * @project: currency-converter
  * @date: 11-11-23
  */
